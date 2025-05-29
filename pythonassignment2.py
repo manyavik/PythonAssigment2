@@ -211,3 +211,120 @@ if __name__ == "__main__":
      system = TaskManager()
      system.run()
 '''
+
+# 11 - ATM Machine Simulation
+
+class Account:
+     def __init__(self, id, pin, balance = 0):
+          self.id = id
+          self.pin = pin
+          self.balance = balance
+     
+     def allow_access(self, pin):
+          if (pin == self.pin):
+               return True
+     
+     def view_balance(self):
+          print(f"Balance: {self.balance}")
+     
+     def withdraw(self, amount):
+          if amount < self.balance:
+               self.balance -= amount
+          else:
+               print("Insufficient funds.")
+               self.view_balance()
+    
+     def deposit(self, amount):
+          self.balance += amount
+     
+     def to_dict(self):
+          return {
+               "id": self.id,
+               "pin": self.pin,
+               "balance": self.balance
+          }
+     
+     def from_dict(item):
+          return Account(item["id"], item["pin"], item["balance"])
+     
+class AccountManager:
+     def __init__(self, file="accounts.json"):
+          self.accountsfile = file
+          self.accounts = self.get_accounts()
+     
+     def get_accounts(self):
+          if os.path.exists(self.accountsfile):
+               with open(self.accountsfile, "r") as f:
+                    try:
+                         data = json.load(f)
+                         return [Account.from_dict(item) for item in data]
+                    except json.JSONDecodeError:
+                         return[]
+          return[]
+
+     def set_accounts(self):
+          with open(self.accountsfile, "w") as f:
+               json.dump([account.to_dict() for account in self.accounts], f)
+     
+     def run(self):
+          manager = AccountManager()
+
+          while True:
+               print("---ATM LOGIN---")
+               print("1. Login to Existing Account")
+               print("2. Make New Account")
+               print("3. Exit")
+
+               choice = input("Choose an option (number): ")
+
+               if choice == '1':
+                    id = input("Enter your user id: ")
+                    matched = False
+                    for account in manager.accounts:
+                         if account.id == id:
+                              matched = True
+                              pin = input("Enter your pin: ")
+                              if account.allow_access(pin):
+                                   print("Login success!")
+                                   print("1. View Balance")
+                                   print("2. Withdrawal")
+                                   print("3. Deposit")
+                                   print("4. Exit")
+                                   option = input("Enter your choice: ")
+                                   if option == '1':
+                                        account.view_balance()
+                                   elif option == '2':
+                                        amount = int(input("Enter withdrawal amount? $"))
+                                        account.withdraw(amount)
+                                   elif option == '3':
+                                        amount = int(input("Enter deposit amount: $"))
+                                        account.deposit(amount)
+                                   elif option == '4':
+                                        print("Goodbye!")
+                                        exit()
+                                   else:
+                                        print("Invalid input.")
+                                   manager.set_accounts()
+                              else:
+                                   print("Incorrect pin.")
+                                   continue
+                    if not matched:
+                         print("Account doesn't exist")
+               if choice == '2':
+                    id = input("Create new user id: ")
+                    for account in manager.accounts:
+                         if account.id == id:
+                              print("This user id is taken. Please try another.")
+                              continue
+                    pin = input("Create new pin: ")
+                    manager.accounts.append(Account(id, pin))
+                    manager.set_accounts()
+                    print("Success! Login with your new account!")
+               if choice == '3':
+                    print("Goodbye!")
+                    exit()
+''' runs #11 
+if __name__ == "__main__":
+     system = AccountManager()
+     system.run()
+'''
