@@ -103,6 +103,111 @@ class BookingSystem:
               else:
                    print("Invalid option")
 
+''' RUN # 8
 if __name__ == "__main__":
     system = BookingSystem()
     system.run()
+'''
+
+# 3 Task Scheduler with Priorities
+
+import heapq
+from datetime import datetime
+
+class Task:
+     def __init__(self, task, deadline, done=False):
+          self.task = task
+          self.deadline = deadline
+          self.done = done
+          self.duedate = datetime.strptime(deadline, "%Y-%m-%d")
+     # for heapq - python uses this comparator 
+     def __lt__(self, other): 
+          return self.duedate < other.duedate #earlier deadline=higher priority
+     # for storing in archive - JSON format
+     def to_dict(self):
+          return {
+               "task": self.task,
+               "deadline": self.deadline,
+               "done": self.done,
+          }
+     def from_dict(item):
+          return Task(item['task'], item['deadline'], item['done'])
+
+class TaskManager:
+     def __init__(self, taskfile="tasks.json", archivefile="archive.json"):
+          self.taskfile = taskfile
+          self.archivefile = archivefile
+          self.tasks = self.get_tasks()
+     
+     def get_tasks(self):
+          if os.path.exists(self.taskfile):
+               with open(self.taskfile, "r") as f:
+                    data = json.load(f)
+                    return [Task.from_dict(item) for item in data]
+          return []
+     
+     def set_tasks(self):
+          with open(self.taskfile, "w") as f:
+               json.dump([task.to_dict() for task in self.tasks if not task.done], f)
+     
+     def set_archives(self, task):
+          archive = []
+          if os.path.exists(self.archivefile):
+               with open(self.archivefile, "r") as f:
+                    archive = json.load(f)
+          archive.append(task.to_dict())
+          with open(self.archivefile, "w") as f:
+               json.dump(archive, f)
+     
+     def add_task(self):
+          task = input("Enter task: ")
+          deadline = input("Enter deadline (YYYY-MM-DD): ")
+          self.tasks.append(Task(task, deadline))
+          self.set_tasks()
+     
+     def view_tasks(self):
+          heap = [t for t in self.tasks if not t.done]
+          heapq.heapify(heap)
+          print("Pending Tasks:")
+          for t in heapq.nsmallest(len(heap), heap):
+               print(f"{t.task} | Deadline: {t.deadline}")
+     
+     def mark_done(self, name):
+          for task in self.tasks:
+               if task.task == name and not task.done:
+                    task.done = True
+                    self.set_archives(task)
+                    break
+          self.tasks = [t for t in self.tasks if not t.done] #removes the task just completed
+          self.set_tasks()
+          print("Task complete and archived!")
+     
+     def run(self):
+          manager = TaskManager()
+          
+          while True:
+               print("-- TASKS --")
+               manager.view_tasks()
+               print("1. add task")
+               print("2. mark task as done")
+               print("3. exit")
+
+               choice = input("Choose an option: ")
+
+               if choice == '1':
+                    manager.add_task()
+               elif choice == '2':
+                    done = input("Enter a task to mark as done: ")
+                    manager.mark_done(done)
+               elif choice == '3':
+                    print("Goodbye!")
+                    break
+               else:
+                    print("Invalid choice.")
+
+
+''' runs #3 task scheduler
+if __name__ == "__main__":
+     system = TaskManager()
+     system.run()
+'''
